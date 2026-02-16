@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Six Wonderer</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --neon-cyan: #00ffff;
+    --neon-pink: #ff00ff;
+    --neon-yellow: #ffff00;
+    --neon-green: #00ff41;
+    --neon-orange: #ff6600;
+    --neon-purple: #9d00ff;
+    --dark-bg: #050510;
+    --grid-color: rgba(0, 255, 255, 0.07);
+    --panel-bg: rgba(0, 5, 30, 0.85);
+    --border-glow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 40px rgba(0,255,255,0.3);
+    --text-shadow-cyan: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+    --text-shadow-pink: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
+    --text-shadow-yellow: 0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'VT323', monospace;
+    background: var(--dark-bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ═══════════════════════════════════════
+     ANIMATED RETRO BACKGROUND
+  ═══════════════════════════════════════ */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  /* Perspective grid floor */
+  .grid-floor {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300%;
+    height: 60%;
+    background:
+      linear-gradient(transparent 0%, rgba(0,255,255,0.03) 100%),
+      repeating-linear-gradient(90deg, var(--grid-color) 0px, var(--grid-color) 1px, transparent 1px, transparent 80px),
+      repeating-linear-gradient(0deg, var(--grid-color) 0px, var(--grid-color) 1px, transparent 1px, transparent 80px);
+    transform-origin: bottom center;
+    transform: translateX(-50%) perspective(600px) rotateX(60deg);
+    animation: gridScroll 4s linear infinite;
+  }
+
+  @keyframes gridScroll {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 0 0, 0 0, 0 80px; }
+  }
+
+  /* Stars */
+  .stars {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, #050510 70%);
+  }
+  .stars::before, .stars::after {
+    content: '';
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    box-shadow:
+      120px 40px #fff, 220px 90px rgba(255,255,255,0.7), 340px 20px #fff,
+      450px 70px rgba(255,255,255,0.5), 570px 30px #fff, 680px 80px rgba(255,255,255,0.8),
+      790px 15px #fff, 900px 60px rgba(255,255,255,0.6), 1050px 25px #fff,
+      1180px 85px rgba(255,255,255,0.7), 50px 150px rgba(255,255,255,0.4),
+      250px 130px #fff, 380px 160px rgba(255,255,255,0.6), 510px 140px #fff,
+      640px 120px rgba(255,255,255,0.5), 760px 170px #fff, 880px 135px rgba(255,255,255,0.8),
+      1000px 155px #fff, 30px 250px rgba(255,255,255,0.4), 160px 230px #fff,
+      290px 260px rgba(255,255,255,0.7), 420px 240px #fff, 550px 220px rgba(255,255,255,0.5);
+    animation: twinkle 3s infinite alternate;
+  }
+  .stars::after {
+    width: 2px; height: 2px;
+    box-shadow:
+      80px 300px rgba(255,255,255,0.6), 200px 320px #fff, 330px 290px rgba(255,255,255,0.4),
+      460px 310px #fff, 590px 280px rgba(255,255,255,0.7), 710px 330px #fff,
+      840px 300px rgba(255,255,255,0.5), 970px 315px #fff, 1100px 285px rgba(255,255,255,0.8);
+    animation-delay: 1.5s;
+  }
+  @keyframes twinkle { from { opacity: 0.4; } to { opacity: 1; } }
+
+  /* Scanlines */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+  }
+
+  /* CRT vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+  }
+
+  /* Floating neon lines */
+  .neon-lines {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .neon-line {
+    position: absolute;
+    height: 1px;
+    width: 100%;
+    opacity: 0;
+    animation: lineFloat 6s linear infinite;
+  }
+  .neon-line:nth-child(1) { top: 20%; background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent); animation-delay: 0s; }
+  .neon-line:nth-child(2) { top: 45%; background: linear-gradient(90deg, transparent, var(--neon-pink), transparent); animation-delay: 2s; }
+  .neon-line:nth-child(3) { top: 70%; background: linear-gradient(90deg, transparent, var(--neon-purple), transparent); animation-delay: 4s; }
+  @keyframes lineFloat {
+    0% { opacity: 0; transform: scaleX(0); }
+    20% { opacity: 0.6; transform: scaleX(1); }
+    80% { opacity: 0.6; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(0); }
+  }
+
+  /* Sun/horizon */
+  .retro-sun {
+    position: absolute;
+    bottom: 38%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 140px;
+    background: linear-gradient(to bottom, #ff6600, #ff0080, #9900ff);
+    border-radius: 140px 140px 0 0;
+    overflow: hidden;
+    box-shadow: 0 0 60px #ff6600, 0 0 120px rgba(255,0,128,0.5);
+  }
+  .retro-sun::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 12px,
+      rgba(5,5,16,0.9) 12px,
+      rgba(5,5,16,0.9) 14px
+    );
+  }
+
+  /* ═══════════════════════════════════════
+     MAIN LAYOUT
+  ═══════════════════════════════════════ */
+  .main-wrapper {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  /* ═══════════════════════════════════════
+     HEADER
+  ═══════════════════════════════════════ */
+  .game-header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .game-title-top {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--neon-yellow);
+    text-shadow: var(--text-shadow-yellow);
+    letter-spacing: 8px;
+    animation: blink 1.5s infinite;
+    margin-bottom: 5px;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  .game-title-main {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(1.2rem, 3vw, 2.2rem);
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow), var(--neon-cyan));
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleShift 3s ease infinite, titlePulse 2s ease-in-out infinite alternate;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
+  }
+  @keyframes titleShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  @keyframes titlePulse { from { filter: drop-shadow(0 0 10px rgba(0,255,255,0.5)); } to { filter: drop-shadow(0 0 30px rgba(255,0,255,0.8)); } }
+
+  .title-underline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+  }
+  .title-underline::before, .title-underline::after {
+    content: '';
+    height: 2px;
+    width: 120px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan));
+    box-shadow: 0 0 8px var(--neon-cyan);
+  }
+  .title-underline::after { background: linear-gradient(90deg, var(--neon-cyan), transparent); }
+  .title-underline span {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-shadow-cyan);
+    letter-spacing: 3px;
+  }
+
+  /* Insert coin flicker */
+  .insert-coin {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.55rem;
+    color: var(--neon-yellow);
+    text-shadow: var(--text-shadow-yellow);
+    letter-spacing: 2px;
+    margin-top: 8px;
+    animation: coinBlink 0.9s step-start infinite;
+  }
+  @keyframes coinBlink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+  /* ═══════════════════════════════════════
+     CHARACTER GRID (SELECT SCREEN)
+  ═══════════════════════════════════════ */
+  #select-screen {
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .select-label {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    color: var(--neon-green);
+    text-shadow: var(--text-shadow-cyan);
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+  .characters-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 10px;
+  }
+
+  @media (max-width: 680px) {
+    .characters-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .char-card {
+    position: relative;
+    background: var(--panel-bg);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 0 10px rgba(0,255,255,0.2), inset 0 0 20px rgba(0,255,255,0.03);
+  }
+  .char-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,255,255,0.08) 0%, transparent 50%, rgba(255,0,255,0.05) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .char-card::after {
+    content: attr(data-num);
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.55rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-shadow-cyan);
+    z-index: 5;
+    opacity: 0.7;
+  }
+
+  .char-card:hover {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255,0,255,0.4), 0 0 40px rgba(255,0,255,0.2), inset 0 0 30px rgba(255,0,255,0.05);
+    transform: translateY(-4px) scale(1.02);
+  }
+  .char-card:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .char-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.2) contrast(1.1);
+    transition: filter 0.3s ease;
+  }
+  .char-card:hover img {
+    filter: saturate(1.5) contrast(1.2) brightness(1.1);
+  }
+
+  .char-card-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,5,30,0.95));
+    padding: 30px 10px 10px;
+    z-index: 3;
+  }
+
+  .char-card-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-shadow-cyan);
+    text-align: center;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .char-card-tag {
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    color: var(--neon-pink);
+    text-align: center;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+  /* Corner decorations */
+  .corner-tl, .corner-br {
+    position: absolute;
+    width: 16px; height: 16px;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .corner-tl {
+    top: 4px; left: 4px;
+    border-top: 2px solid var(--neon-cyan);
+    border-left: 2px solid var(--neon-cyan);
+    box-shadow: -2px -2px 8px rgba(0,255,255,0.4);
+  }
+  .corner-br {
+    bottom: 4px; right: 4px;
+    border-bottom: 2px solid var(--neon-cyan);
+    border-right: 2px solid var(--neon-cyan);
+    box-shadow: 2px 2px 8px rgba(0,255,255,0.4);
+  }
+
+  /* Hover scanline */
+  .char-card:hover .corner-tl,
+  .char-card:hover .corner-br {
+    border-color: var(--neon-pink);
+    box-shadow: none;
+  }
+
+  /* ═══════════════════════════════════════
+     CHARACTER DETAIL SCREEN
+  ═══════════════════════════════════════ */
+  #detail-screen {
+    display: none;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .detail-container {
+    background: var(--panel-bg);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: var(--border-glow);
+    position: relative;
+    overflow: hidden;
+  }
+  .detail-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.04), transparent);
+    animation: shimmer 4s linear infinite;
+  }
+  @keyframes shimmer { to { left: 200%; } }
+
+  /* Corner decorations for detail */
+  .detail-corner {
+    position: absolute;
+    width: 30px; height: 30px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .dc-tl { top: 8px; left: 8px; border-top: 3px solid var(--neon-cyan); border-left: 3px solid var(--neon-cyan); box-shadow: -4px -4px 12px rgba(0,255,255,0.5); }
+  .dc-tr { top: 8px; right: 8px; border-top: 3px solid var(--neon-pink); border-right: 3px solid var(--neon-pink); box-shadow: 4px -4px 12px rgba(255,0,255,0.5); }
+  .dc-bl { bottom: 8px; left: 8px; border-bottom: 3px solid var(--neon-pink); border-left: 3px solid var(--neon-pink); box-shadow: -4px 4px 12px rgba(255,0,255,0.5); }
+  .dc-br { bottom: 8px; right: 8px; border-bottom: 3px solid var(--neon-cyan); border-right: 3px solid var(--neon-cyan); box-shadow: 4px 4px 12px rgba(0,255,255,0.5); }
+
+  /* HUD top bar */
+  .detail-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: rgba(0,255,255,0.5);
+    letter-spacing: 3px;
+  }
+  .hud-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--neon-green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--neon-green);
+    animation: hud-blink 1s step-start infinite;
+  }
+  @keyframes hud-blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+  .detail-main {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 600px) {
+    .detail-main { grid-template-columns: 1fr; }
+  }
+
+  /* Portrait side */
+  .portrait-side { position: relative; }
+
+  .portrait-frame {
+    position: relative;
+    border: 2px solid var(--neon-cyan);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,255,255,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .portrait-frame img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.3) contrast(1.1);
+  }
+  .portrait-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 60%,
+      rgba(0, 255, 255, 0.06) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Glitch effect on portrait */
+  .portrait-glitch {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    animation: glitchHide 5s linear infinite;
+  }
+  .portrait-glitch::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 0; right: 0;
+    height: 3px;
+    background: rgba(0,255,255,0.7);
+    animation: glitchLine 5s linear infinite;
+  }
+  @keyframes glitchHide { 0%,94%,100%{opacity:0;} 95%,99%{opacity:1;} }
+  @keyframes glitchLine {
+    0%,94%,100%{top:20%;transform:translateX(0);opacity:0;}
+    95%{top:20%;transform:translateX(-10px);opacity:1;}
+    97%{top:60%;transform:translateX(8px);opacity:1;}
+    99%{top:40%;transform:translateX(-5px);opacity:1;}
+  }
+
+  /* Player ID badge */
+  .player-badge {
+    position: absolute;
+    top: -2px; left: -2px;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    padding: 4px 12px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    color: #000;
+    font-weight: 900;
+    z-index: 5;
+    letter-spacing: 1px;
+  }
+
+  /* HP / stat bars */
+  .stat-bars {
+    margin-top: 14px;
+  }
+  .stat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .stat-label {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: rgba(0,255,255,0.7);
+    width: 38px;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+  }
+  .stat-bar-bg {
+    flex: 1;
+    height: 12px;
+    background: rgba(0,255,255,0.1);
+    border: 1px solid rgba(0,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    transition: width 0.8s cubic-bezier(0.17, 0.67, 0.35, 1.2);
+  }
+  .stat-bar-fill.hp { background: linear-gradient(90deg, #00ff41, #88ff00); box-shadow: 0 0 8px #00ff41; }
+  .stat-bar-fill.atk { background: linear-gradient(90deg, #ff4400, #ff8800); box-shadow: 0 0 8px #ff4400; }
+  .stat-bar-fill.def { background: linear-gradient(90deg, #0066ff, #00aaff); box-shadow: 0 0 8px #0066ff; }
+  .stat-bar-fill.spd { background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple)); box-shadow: 0 0 8px var(--neon-pink); }
+  .stat-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: rgba(255,255,255,0.2);
+  }
+  .stat-val {
+    font-family: 'VT323', monospace;
+    font-size: 0.9rem;
+    color: var(--neon-yellow);
+    width: 28px;
+    text-align: right;
+  }
+
+  /* Info side */
+  .info-side {}
+
+  .char-name-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 900;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-shadow-cyan);
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    word-break: break-word;
+  }
+
+  .char-title-display {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: var(--neon-pink);
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+  }
+
+  .section-label {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    color: var(--neon-yellow);
+    text-shadow: var(--text-shadow-yellow);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--neon-yellow), transparent);
+    opacity: 0.4;
+  }
+
+  /* Abilities list */
+  .abilities-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ability-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(0,255,255,0.04);
+    border: 1px solid rgba(0,255,255,0.15);
+    border-left: 3px solid var(--neon-pink);
+    padding: 7px 10px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    cursor: default;
+  }
+  .ability-item:hover {
+    background: rgba(255,0,255,0.08);
+    border-left-color: var(--neon-cyan);
+    transform: translateX(4px);
+    box-shadow: -4px 0 12px rgba(0,255,255,0.2);
+  }
+  .ability-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ability-text-wrap {}
+  .ability-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .ability-desc {
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    color: rgba(200, 220, 255, 0.75);
+    line-height: 1.3;
+  }
+
+  /* No abilities placeholder */
+  .no-abilities {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: rgba(0,255,255,0.3);
+    text-align: center;
+    padding: 10px;
+    border: 1px dashed rgba(0,255,255,0.2);
+    letter-spacing: 2px;
+  }
+
+  /* ═══════════════════════════════════════
+     EDIT PANEL
+  ═══════════════════════════════════════ */
+  .edit-panel {
+    display: none;
+    margin-top: 16px;
+    background: rgba(0,0,20,0.9);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-radius: 2px;
+    padding: 14px;
+    animation: slideDown 0.25s ease-out;
+  }
+  .edit-panel.open { display: block; }
+
+  @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .edit-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .edit-label {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: rgba(0,255,255,0.6);
+    letter-spacing: 2px;
+    min-width: 70px;
+  }
+  .edit-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(0,255,255,0.06);
+    border: 1px solid rgba(0,255,255,0.3);
+    color: var(--neon-cyan);
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    padding: 5px 10px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .edit-input::placeholder { color: rgba(0,255,255,0.2); }
+  .edit-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0,255,255,0.3);
+  }
+
+  /* Add ability row */
+  .ability-add-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .edit-input-sm {
+    flex: 1;
+    min-width: 80px;
+    background: rgba(0,255,255,0.06);
+    border: 1px solid rgba(0,255,255,0.3);
+    color: var(--neon-cyan);
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    padding: 5px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .edit-input-sm::placeholder { color: rgba(0,255,255,0.2); }
+  .edit-input-sm:focus { border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,255,255,0.3); }
+
+  /* ═══════════════════════════════════════
+     BUTTONS
+  ═══════════════════════════════════════ */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    justify-content: flex-start;
+  }
+
+  .retro-btn {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.55rem;
+    padding: 10px 18px;
+    border: 2px solid;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    background: transparent;
+  }
+  .retro-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .retro-btn:hover::before { opacity: 0.12; }
+  .retro-btn:active { transform: scale(0.95); }
+
+  .btn-back {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0,255,255,0.2);
+  }
+  .btn-back:hover { box-shadow: 0 0 16px rgba(0,255,255,0.5); color: var(--neon-cyan); }
+
+  .btn-edit {
+    color: var(--neon-yellow);
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 8px rgba(255,255,0,0.2);
+  }
+  .btn-edit:hover { box-shadow: 0 0 16px rgba(255,255,0,0.5); }
+
+  .btn-save {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 8px rgba(0,255,65,0.2);
+  }
+  .btn-save:hover { box-shadow: 0 0 16px rgba(0,255,65,0.5); }
+
+  .btn-add {
+    color: var(--neon-pink);
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 8px rgba(255,0,255,0.2);
+    font-size: 0.5rem;
+    padding: 8px 14px;
+  }
+  .btn-add:hover { box-shadow: 0 0 16px rgba(255,0,255,0.5); }
+
+  .btn-remove {
+    color: #ff4444;
+    border-color: #ff4444;
+    background: transparent;
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    border: 1px solid;
+    cursor: pointer;
+    letter-spacing: 1px;
+    border-radius: 2px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+  .btn-remove:hover { background: rgba(255,68,68,0.15); box-shadow: 0 0 8px rgba(255,68,68,0.4); }
+
+  .ability-item-editable {
+    cursor: default;
+  }
+  .ability-item-editable .ability-remove-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ═══════════════════════════════════════
+     FOOTER / HUD
+  ═══════════════════════════════════════ */
+  .game-footer {
+    margin-top: 28px;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: rgba(0,255,255,0.3);
+    letter-spacing: 4px;
+  }
+
+  .credits-line {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: rgba(255,0,255,0.25);
+    letter-spacing: 3px;
+  }
+
+  /* ═══════════════════════════════════════
+     SCREEN TRANSITIONS
+  ═══════════════════════════════════════ */
+  .screen-enter {
+    animation: screenIn 0.3s cubic-bezier(0.17, 0.67, 0.35, 1.2) both;
+  }
+  @keyframes screenIn {
+    from { opacity:0; transform: scale(0.96) translateY(10px); }
+    to { opacity:1; transform: scale(1) translateY(0); }
+  }
+
+  /* Scan transition */
+  .scan-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--neon-cyan) 50%,
+      transparent 100%
+    );
+    height: 6px;
+    animation: scanAnim 0.4s ease-in-out both;
+    pointer-events: none;
+    opacity: 0;
+    top: 0;
+  }
+  @keyframes scanAnim {
+    0% { top: 0; opacity: 0.8; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* Retro card number indicator */
+  .p-number {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.45rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-shadow-cyan);
+    background: rgba(0,255,255,0.1);
+    border: 1px solid rgba(0,255,255,0.3);
+    padding: 3px 6px;
+    letter-spacing: 2px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<div class="bg-layer">
+  <div class="stars"></div>
+  <div class="retro-sun"></div>
+  <div class="grid-floor"></div>
+  <div class="neon-lines">
+    <div class="neon-line"></div>
+    <div class="neon-line"></div>
+    <div class="neon-line"></div>
+  </div>
+</div>
+
+<!-- SCANLINES & VIGNETTE -->
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- SCAN TRANSITION ELEMENT -->
+<div class="scan-transition" id="scanLine"></div>
+
+<!-- MAIN -->
+<div class="main-wrapper">
+  <!-- HEADER -->
+  <div class="game-header">
+    <div class="game-title-top">▶ SELECT YOUR FIGHTER ◀</div>
+    <div class="game-title-main">The Six Wonderer</div>
+    <div class="title-underline"><span>VS</span></div>
+    <div class="insert-coin">INSERT COIN TO CONTINUE</div>
+  </div>
+
+  <!-- ═══ SELECT SCREEN ═══ -->
+  <div id="select-screen">
+    <div class="select-label">▶ CHOOSE PLAYER ◀</div>
+    <div class="characters-grid" id="grid"></div>
+  </div>
+
+  <!-- ═══ DETAIL SCREEN ═══ -->
+  <div id="detail-screen">
+    <div class="detail-container">
+      <!-- Corner decorations -->
+      <div class="detail-corner dc-tl"></div>
+      <div class="detail-corner dc-tr"></div>
+      <div class="detail-corner dc-bl"></div>
+      <div class="detail-corner dc-br"></div>
+
+      <!-- HUD Bar -->
+      <div class="detail-hud">
+        <span>SYS::FIGHTER_DATA</span>
+        <span><span class="hud-dot"></span> ONLINE</span>
+        <span id="detail-id-label">P-01</span>
+      </div>
+
+      <!-- Main content -->
+      <div class="detail-main">
+
+        <!-- LEFT: Portrait -->
+        <div class="portrait-side">
+          <div class="portrait-frame">
+            <div class="player-badge" id="detail-badge">P1</div>
+            <img id="detail-img" src="" alt="Character">
+            <div class="portrait-glitch"></div>
+          </div>
+
+          <!-- STAT BARS -->
+          <div class="stat-bars">
+            <div class="stat-bar-row">
+              <span class="stat-label">HP</span>
+              <div class="stat-bar-bg"><div class="stat-bar-fill hp" id="stat-hp" style="width:0%"></div></div>
+              <span class="stat-val" id="stat-hp-val"></span>
+            </div>
+            <div class="stat-bar-row">
+              <span class="stat-label">ATK</span>
+              <div class="stat-bar-bg"><div class="stat-bar-fill atk" id="stat-atk" style="width:0%"></div></div>
+              <span class="stat-val" id="stat-atk-val"></span>
+            </div>
+            <div class="stat-bar-row">
+              <span class="stat-label">DEF</span>
+              <div class="stat-bar-bg"><div class="stat-bar-fill def" id="stat-def" style="width:0%"></div></div>
+              <span class="stat-val" id="stat-def-val"></span>
+            </div>
+            <div class="stat-bar-row">
+              <span class="stat-label">SPD</span>
+              <div class="stat-bar-bg"><div class="stat-bar-fill spd" id="stat-spd" style="width:0%"></div></div>
+              <span class="stat-val" id="stat-spd-val"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Info -->
+        <div class="info-side">
+          <div class="char-name-display" id="detail-name"></div>
+          <div class="char-title-display" id="detail-title"></div>
+
+          <div class="section-label">ABILITIES</div>
+          <ul class="abilities-list" id="detail-abilities"></ul>
+
+          <!-- Edit panel -->
+          <div class="edit-panel" id="edit-panel">
+            <div class="section-label" style="margin-top:0;">EDIT FIGHTER</div>
+            <div class="edit-row">
+              <span class="edit-label">NAME:</span>
+              <input class="edit-input" id="edit-name" type="text" placeholder="Enter name...">
+            </div>
+            <div class="edit-row">
+              <span class="edit-label">TITLE:</span>
+              <input class="edit-input" id="edit-title" type="text" placeholder="Fighter class...">
+            </div>
+
+            <div class="section-label" style="font-size:0.45rem; margin-top:12px;">ADD ABILITY</div>
+            <div class="ability-add-row">
+              <input class="edit-input-sm" id="new-ability-icon" type="text" placeholder="Icon" style="max-width:65px;">
+              <input class="edit-input-sm" id="new-ability-name" type="text" placeholder="Ability name...">
+              <input class="edit-input-sm" id="new-ability-desc" type="text" placeholder="Description...">
+              <button class="retro-btn btn-add" onclick="addAbility()">+ ADD</button>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="btn-row">
+            <button class="retro-btn btn-back" onclick="goBack()">◀ BACK</button>
+            <button class="retro-btn btn-edit" id="toggle-edit-btn" onclick="toggleEdit()">✎ EDIT</button>
+            <button class="retro-btn btn-save" id="save-btn" onclick="saveEdit()" style="display:none;">✔ SAVE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="game-footer">
+    ◆ P1 VS P2 VS P3 VS P4 VS P5 VS P6 ◆
+    <div class="credits-line">RETRO ROSTER v1.0 — ALL RIGHTS RESERVED</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CHARACTER DATA
+// ═══════════════════════════════════════════════════
+const characters = [
+  {
+    id: 1,
+    name: "Julian the Gooner",
+    title: "Cummer",
+    img: "https://scontent.fcrk2-4.fna.fbcdn.net/v/t1.15752-9/598164159_4087210334865744_7551185694828521094_n.jpg?stp=dst-jpg_p480x480_tt6&_nc_cat=100&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeE-M82Xa_tjIP5sJm96MJivqmlZ4eWgUZuqaVnh5aBRm7YzXAn3U1w7SG7PecKLo5BYyhntMcSXCF9O-vYM88ul&_nc_ohc=HfX-XVdR_BYQ7kNvwEltQ3X&_nc_oc=AdkrIqTvyuEqgrVIEOJbafPD3UJLyFQggfL1QX6nH4sl-X_dMXmbhKcYp8rNTikFn50&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fcrk2-4.fna&oh=03_Q7cD4gHvkGzhfDywz40wbdnAuJaqLHRxF9eskf2fQP0oLQ_xZg&oe=69BA462E",
+    stats: { hp: 72, atk: 88, def: 60, spd: 95 },
+    abilities: [
+      { icon: "🌑", name: "Shadow cum", desc: "Teleport behind the enemy shoot out cum." },
+      { icon: "⚡", name: "cum strike", desc: "Lightning fast combo that stuns." },
+      { icon: "🔪", name: "Death goon", desc: "Forces the enemy to goon till death." }
+    ]
+  },
+  {
+    id: 2,
+    name: "Khen the nemesis",
+    title: "the sad man",
+    img: "https://scontent.fcrk4-1.fna.fbcdn.net/v/t1.15752-9/488200417_1414476243049367_5840312904290596717_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEKbcITUuw4uHf5dG2-khiMk63uYtiYChGTre5i2JgKEfVj9hhc-Fe_N5-8v4BQF5WjKJtzNwrRbP5caaBbFDMO&_nc_ohc=uVR4fRm5o-cQ7kNvwHKjfrR&_nc_oc=AdlCib6NZdkl-Ke6FP9PeRp9ozSsgm-OrMPDRRxc0CK62t5dIaNCKy3QGkc6nqvispk&_nc_zt=23&_nc_ht=scontent.fcrk4-1.fna&oh=03_Q7cD4gFKVbkhIgjwpuJGKTMpiszateticW-81A4MHpqobqGXSA&oe=69BA1ED7",
+    stats: { hp: 98, atk: 75, def: 95, spd: 45 },
+    abilities: [
+      { icon: "🛡️", name: "Emotional bounce back ", desc: "Absorb all Emotional damage for 3 seconds." },
+      { icon: "💥", name: "Mama calling", desc: "Summon the mother for 1 minute to deal damage." },
+      { icon: "🔩", name: "Ghosted Again", desc: "Disappear 5 seconds, enemy feel confusion and slighty hurt." }
+    ]
+  },
+  {
+    id: 3,
+    name: "Balager The Pride man",
+    title: "the one who fell",
+    img: "https://scontent.fcrk2-3.fna.fbcdn.net/v/t1.15752-9/484647343_1079310367360113_8179344246360623215_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeHDjA3ipe7Dfyb947TDEoY54wyPb6d3nKTjDI9vp3ecpANfrxz2wc1Gir5jV8f1yy6G3yeaur6xmQvrzgaCjZ8x&_nc_ohc=ocRfV11m628Q7kNvwE8TMj2&_nc_oc=AdmiSnv4sxD_DwHiSmM2b9RkGG9ak2ror5q_DIekIMBrYbFSH3CuSDzMpIYbZuxwl_0&_nc_zt=23&_nc_ht=scontent.fcrk2-3.fna&oh=03_Q7cD4gFZ1LLuDBZO300S3eBYiglLt13eerwksBqpDKPjrrJV9w&oe=69BA25D7",
+    stats: { hp: 65, atk: 82, def: 55, spd: 90 },
+    abilities: [
+      { icon: "🐍", name: "Thirst trap", desc: "set a trap to lure the baddies." },
+      { icon: "💀", name: "Loud mouth", desc: "talk Loud without getting exhausted." },
+      { icon: "🎯", name: "Exhibition", desc: "Sleep while his tummy to deal damage to enemy and confuse them." }
+    ]
+  },
+  {
+    id: 4,
+    name: "Iane the certified lover NPC",
+    title: "the indian pilipino",
+    img: "https://scontent.fcrk2-3.fna.fbcdn.net/v/t1.15752-9/482650334_1040113591277534_3664313147028023448_n.jpg?stp=dst-jpg_s2048x2048_tt6&_nc_cat=110&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeHoePDTFGgmMCwnI7xmdAHZ_9mH-Ysdu2f_2Yf5ix27Z13PbpGGWFmw6F1Kr1hOcloBmU0cw-ssKNPF3piX4htD&_nc_ohc=vYj29R_UXgkQ7kNvwG8_Z89&_nc_oc=AdnTC7uxx5e_IwZDrnPLqzjbwJdWhHHKAEZqp1BYfhqnliHlkt7Lbbu8cAxGlyTdDrU&_nc_zt=23&_nc_ht=scontent.fcrk2-3.fna&oh=03_Q7cD4gFWmO3iIoHbuYe07uL8pv6JQE2jk7RDXBbSPbxiSpmKsQ&oe=69BA2529",
+    stats: { hp: 80, atk: 96, def: 50, spd: 70 },
+    abilities: [
+      { icon: "🔥", name: "monkey calling", desc: "summon his inner monkey." },
+      { icon: "💣", name: "Rage Mode", desc: "when rage baited muted for entire day." },
+      { icon: "🌋", name: "Loverboy Mode", desc: "Charm- control emotional damage." }
+    ]
+  },
+  {
+    id: 5,
+    name: "the girl who yearns, never learns",
+    title: "the baby girl",
+    img: "https://scontent.fcrk4-1.fna.fbcdn.net/v/t1.15752-9/481970219_1718183842439105_3810145860448819645_n.jpg?stp=dst-jpg_s526x395_tt6&_nc_cat=106&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeF_qWlIIqQxabJNmqHg22JfpwzBKtwigSanDMEq3CKBJhCYVTSt3OJPwla6tTnVzzKJeQmXh7uR4tDSzwJsAtKf&_nc_ohc=FEcrdLgtuIIQ7kNvwGx1sHz&_nc_oc=Adn7gpd-3hkjoFeS-BCDXbXrUbVqpBQHoRMAI8AJQW6pecdnznrwsgbyfMJL39TpcYU&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fcrk4-1.fna&oh=03_Q7cD4gFmNUuKkYthh_mjxC2kpvNv5YuUE0ZrFcsAvxsJY6sk1g&oe=69BA18D4",
+    stats: { hp: 68, atk: 91, def: 58, spd: 78 },
+    abilities: [
+      { icon: "⚡", name: "typing", desc: "Devastating critical immaculate responsiveness." },
+      { icon: "❄️", name: "Delusional", desc: "confuse the enemy and herself." },
+      { icon: "🌀", name: "final acceptance", desc: "Its over." }
+    ]
+  },
+  {
+    id: 6,
+    name: "mac the thunder God",
+    title: "the descendant of pikachu",
+    img: "https://media.discordapp.net/attachments/1449654162433249404/1472860613477797968/Z.png?ex=69941bd6&is=6992ca56&hm=27c88f756a89929ec33e9eee94d45e0a2256d04adf4a51820b8cf034c6ca5153&=&format=webp&quality=lossless&width=495&height=568",
+    stats: { hp: 74, atk: 84, def: 70, spd: 85 },
+    abilities: [
+      { icon: "⚡", name: "Lightning rod", desc: "Unfolds his dick to deal thunder damage." },
+      { icon: "⚡", name: "Lightning power up", desc: "Pause to distract the enemy." },
+      { icon: "⚡", name: "Divine Possession", desc: "summon his all mighty pikachu to control his body." }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let currentCharIndex = null;
+let editOpen = false;
+
+// ═══════════════════════════════════════════════════
+// BUILD GRID
+// ═══════════════════════════════════════════════════
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  characters.forEach((char, i) => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.setAttribute('data-num', `P${char.id}`);
+    card.innerHTML = `
+      <div class="corner-tl"></div>
+      <div class="corner-br"></div>
+      <img src="${char.img}" alt="${char.name}" loading="lazy"
+        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%230a0a2a%22 width=%22200%22 height=%22200%22/><text fill=%22%2300ffff%22 font-size=%2230%22 text-anchor=%22middle%22 x=%22100%22 y=%22110%22>P${char.id}</text></svg>'">
+      <div class="char-card-overlay">
+        <div class="char-card-name">${char.name}</div>
+        <div class="char-card-tag">${char.title}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => openCharacter(i));
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// OPEN CHARACTER DETAIL
+// ═══════════════════════════════════════════════════
+function openCharacter(idx) {
+  currentCharIndex = idx;
+  editOpen = false;
+  const char = characters[idx];
+
+  // Scan line effect
+  const scan = document.getElementById('scanLine');
+  scan.style.animation = 'none';
+  void scan.offsetWidth;
+  scan.style.animation = 'scanAnim 0.4s ease-in-out both';
+
+  setTimeout(() => {
+    // Update DOM
+    document.getElementById('detail-img').src = char.img;
+    document.getElementById('detail-img').onerror = function() {
+      this.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect fill="%230a0a2a" width="300" height="300"/><text fill="%2300ffff" font-size="60" text-anchor="middle" x="150" y="170">P${char.id}</text></svg>`;
+    };
+    document.getElementById('detail-name').textContent = char.name;
+    document.getElementById('detail-title').textContent = char.title;
+    document.getElementById('detail-badge').textContent = `P${char.id}`;
+    document.getElementById('detail-id-label').textContent = `P-0${char.id}`;
+
+    // Stats (animate in)
+    document.getElementById('stat-hp').style.width = '0%';
+    document.getElementById('stat-atk').style.width = '0%';
+    document.getElementById('stat-def').style.width = '0%';
+    document.getElementById('stat-spd').style.width = '0%';
+
+    renderAbilities(idx);
+    closeEditPanel();
+
+    // Show/hide screens
+    document.getElementById('select-screen').style.display = 'none';
+    const ds = document.getElementById('detail-screen');
+    ds.style.display = 'block';
+    ds.classList.remove('screen-enter');
+    void ds.offsetWidth;
+    ds.classList.add('screen-enter');
+
+    // Animate stat bars after render
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.getElementById('stat-hp').style.width = char.stats.hp + '%';
+        document.getElementById('stat-hp-val').textContent = char.stats.hp;
+        document.getElementById('stat-atk').style.width = char.stats.atk + '%';
+        document.getElementById('stat-atk-val').textContent = char.stats.atk;
+        document.getElementById('stat-def').style.width = char.stats.def + '%';
+        document.getElementById('stat-def-val').textContent = char.stats.def;
+        document.getElementById('stat-spd').style.width = char.stats.spd + '%';
+        document.getElementById('stat-spd-val').textContent = char.stats.spd;
+      }, 100);
+    });
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER ABILITIES
+// ═══════════════════════════════════════════════════
+function renderAbilities(idx) {
+  const char = characters[idx];
+  const list = document.getElementById('detail-abilities');
+  list.innerHTML = '';
+
+  if (!char.abilities || char.abilities.length === 0) {
+    list.innerHTML = `<div class="no-abilities">[ NO ABILITIES ASSIGNED ]</div>`;
+    return;
+  }
+
+  char.abilities.forEach((ab, ai) => {
+    const li = document.createElement('li');
+    li.className = 'ability-item ability-item-editable';
+    li.innerHTML = `
+      <span class="ability-icon">${ab.icon || '⚔️'}</span>
+      <div class="ability-text-wrap">
+        <span class="ability-name">${ab.name}</span>
+        <span class="ability-desc">${ab.desc}</span>
+      </div>
+      <div class="ability-remove-wrap">
+        <button class="btn-remove" onclick="removeAbility(${ai})" title="Remove ability">✕</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// BACK TO SELECT
+// ═══════════════════════════════════════════════════
+function goBack() {
+  const scan = document.getElementById('scanLine');
+  scan.style.animation = 'none';
+  void scan.offsetWidth;
+  scan.style.animation = 'scanAnim 0.4s ease-in-out both';
+
+  setTimeout(() => {
+    document.getElementById('detail-screen').style.display = 'none';
+    const ss = document.getElementById('select-screen');
+    ss.style.display = 'block';
+    ss.classList.remove('screen-enter');
+    void ss.offsetWidth;
+    ss.classList.add('screen-enter');
+    buildGrid(); // Refresh to show any edits
+    currentCharIndex = null;
+    editOpen = false;
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════
+// TOGGLE EDIT
+// ═══════════════════════════════════════════════════
+function toggleEdit() {
+  editOpen = !editOpen;
+  const panel = document.getElementById('edit-panel');
+  const btn = document.getElementById('toggle-edit-btn');
+  const saveBtn = document.getElementById('save-btn');
+
+  if (editOpen) {
+    const char = characters[currentCharIndex];
+    document.getElementById('edit-name').value = char.name;
+    document.getElementById('edit-title').value = char.title;
+    panel.classList.add('open');
+    btn.textContent = '✕ CLOSE';
+    saveBtn.style.display = 'inline-block';
+  } else {
+    closeEditPanel();
+  }
+}
+
+function closeEditPanel() {
+  editOpen = false;
+  document.getElementById('edit-panel').classList.remove('open');
+  document.getElementById('toggle-edit-btn').textContent = '✎ EDIT';
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('new-ability-icon').value = '';
+  document.getElementById('new-ability-name').value = '';
+  document.getElementById('new-ability-desc').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+// SAVE EDIT
+// ═══════════════════════════════════════════════════
+function saveEdit() {
+  if (currentCharIndex === null) return;
+  const char = characters[currentCharIndex];
+
+  const newName = document.getElementById('edit-name').value.trim().toUpperCase();
+  const newTitle = document.getElementById('edit-title').value.trim();
+
+  if (newName) char.name = newName;
+  if (newTitle) char.title = newTitle;
+
+  // Update display
+  document.getElementById('detail-name').textContent = char.name;
+  document.getElementById('detail-title').textContent = char.title;
+
+  // Flash save confirmation
+  const saveBtn = document.getElementById('save-btn');
+  const orig = saveBtn.textContent;
+  saveBtn.textContent = '✔ SAVED!';
+  saveBtn.style.color = '#00ff41';
+  saveBtn.style.borderColor = '#00ff41';
+  setTimeout(() => {
+    saveBtn.textContent = orig;
+    saveBtn.style.color = '';
+    saveBtn.style.borderColor = '';
+  }, 1200);
+}
+
+// ═══════════════════════════════════════════════════
+// ADD ABILITY
+// ═══════════════════════════════════════════════════
+function addAbility() {
+  if (currentCharIndex === null) return;
+  const icon = document.getElementById('new-ability-icon').value.trim() || '⚔️';
+  const name = document.getElementById('new-ability-name').value.trim();
+  const desc = document.getElementById('new-ability-desc').value.trim();
+
+  if (!name) {
+    document.getElementById('new-ability-name').focus();
+    document.getElementById('new-ability-name').style.borderColor = '#ff4444';
+    setTimeout(() => document.getElementById('new-ability-name').style.borderColor = '', 800);
+    return;
+  }
+
+  characters[currentCharIndex].abilities.push({ icon, name, desc: desc || 'No description.' });
+  renderAbilities(currentCharIndex);
+
+  document.getElementById('new-ability-icon').value = '';
+  document.getElementById('new-ability-name').value = '';
+  document.getElementById('new-ability-desc').value = '';
+  document.getElementById('new-ability-icon').focus();
+}
+
+// ═══════════════════════════════════════════════════
+// REMOVE ABILITY
+// ═══════════════════════════════════════════════════
+function removeAbility(abilityIdx) {
+  if (currentCharIndex === null) return;
+  characters[currentCharIndex].abilities.splice(abilityIdx, 1);
+  renderAbilities(currentCharIndex);
+}
+
+// ═══════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('detail-screen').style.display !== 'none') {
+      if (editOpen) closeEditPanel();
+      else goBack();
+    }
+  }
+  if (e.key === 'Enter' && editOpen) {
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.id && activeEl.id.startsWith('new-ability')) {
+      addAbility();
+    } else {
+      saveEdit();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+buildGrid();
+document.getElementById('select-screen').classList.add('screen-enter');
+</script>
+</body>
+</html>
